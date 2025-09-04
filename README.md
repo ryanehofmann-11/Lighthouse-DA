@@ -100,3 +100,23 @@ Treat each quarter’s listings as a decision window.
 - You may downsample/upsample or use class weights; explain your choice.
 - Keep the solution compact and readable. We care about your reasoning as much as your metrics.
 - If you propose a different, sensible ROI proxy or selection rule, that’s fine—just document it.
+
+
+## Submission Information
+
+### Create a fork of the repository
+<img width="1699" height="393" alt="image" src="https://github.com/user-attachments/assets/f887255c-0155-4b0e-b90b-5d42b26b73b6" />
+
+---
+
+<img width="1792" height="870" alt="image" src="https://github.com/user-attachments/assets/1719eb7a-e2d2-4db9-8241-150a5f911f3d" />
+
+---
+
+This will create a forked copy of the repository under your github account. You can use this fork to create to complete your data challenge. When your submission is ready, you can open a pull request (PR) against this repository using the branch on your fork that contains your work. Your fork has knowledge of the main repository it was created from. Use the `Contribute` button to create the PR.
+
+<img width="1745" height="777" alt="image" src="https://github.com/user-attachments/assets/43c55bc0-eccd-4108-aa12-53c8796efd05" />
+
+---
+
+
