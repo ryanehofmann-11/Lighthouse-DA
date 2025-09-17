@@ -70,7 +70,7 @@ class LendingClubAnalyzer:
         self.model = None
         self.scaler = None
         self.feature_columns = None
-        self.budget_per_quarter = 5000
+        self.budget_per_quarter = 50000  # Updated to $50,000 for hiring team request
         
         # Track banned columns (post-origination data)
         self.banned_columns = [
@@ -745,6 +745,76 @@ class LendingClubAnalyzer:
         
         return results
     
+    def generate_loan_recommendations(self, test_quarter: str = '2017Q1') -> pd.DataFrame:
+        """
+        Generate specific loan recommendations for the hiring team.
+        
+        Args:
+            test_quarter: Quarter to generate recommendations for
+            
+        Returns:
+            DataFrame with recommended loans and details
+        """
+        print(f"\n=== GENERATING LOAN RECOMMENDATIONS FOR {test_quarter} ===")
+        
+        # Get test data
+        test_data = self.processed_data[test_quarter].copy()
+        test_data = test_data[test_data['loan_status'] != 'Current'].copy()
+        
+        # Prepare features
+        X_test = test_data[self.feature_columns].copy()
+        
+        # Handle categorical variables (same as training)
+        categorical_features = X_test.select_dtypes(include=['object']).columns
+        for col in categorical_features:
+            X_test[col] = X_test[col].fillna('missing')
+            # Simple encoding for unseen categories
+            unique_vals = X_test[col].unique()
+            val_map = {val: i for i, val in enumerate(unique_vals)}
+            X_test[col] = X_test[col].map(val_map)
+        
+        # Handle missing values and scale
+        imputer = SimpleImputer(strategy='median')
+        X_test = pd.DataFrame(
+            imputer.fit_transform(X_test),
+            columns=X_test.columns,
+            index=X_test.index
+        )
+        X_test = pd.DataFrame(
+            self.scaler.transform(X_test),
+            columns=X_test.columns,
+            index=X_test.index
+        )
+        
+        # Apply decision policy
+        decisions = self.implement_decision_policy(X_test, test_data)
+        
+        # Get selected loans with detailed information
+        selected_loans = decisions[decisions['selected']].copy()
+        
+        # Add additional useful columns for recommendations
+        recommendation_cols = [
+            'id', 'funded_amnt', 'int_rate', 'term', 'installment', 
+            'sub_grade', 'annual_inc', 'dti', 'fico_avg', 'emp_length',
+            'home_ownership', 'purpose', 'verification_status', 'predicted_default_prob'
+        ]
+        
+        # Filter to available columns
+        available_cols = [col for col in recommendation_cols if col in selected_loans.columns]
+        recommendations = selected_loans[available_cols].copy()
+        
+        # Sort by predicted default probability (lowest risk first)
+        recommendations = recommendations.sort_values('predicted_default_prob')
+        
+        # Add ranking
+        recommendations['rank'] = range(1, len(recommendations) + 1)
+        
+        print(f"Generated {len(recommendations)} loan recommendations")
+        print(f"Total investment: ${recommendations['funded_amnt'].sum():,.2f}")
+        print(f"Budget utilization: {recommendations['funded_amnt'].sum() / self.budget_per_quarter:.1%}")
+        
+        return recommendations
+    
     def get_feature_importance(self) -> pd.DataFrame:
         """
         Get feature importance from the trained model.
@@ -854,6 +924,9 @@ class LendingClubAnalyzer:
         # 6. Backtest strategy
         backtest_results = self.backtest_strategy('2017Q1')
         
+        # 6b. Generate loan recommendations for hiring team
+        loan_recommendations = self.generate_loan_recommendations('2017Q1')
+        
         # 7. Feature importance and explainability
         feature_importance = self.get_feature_importance()
         feature_provenance = self.create_feature_provenance_table()
@@ -878,6 +951,7 @@ class LendingClubAnalyzer:
             'eda_results': eda_results,
             'evaluation': eval_results,
             'backtest': backtest_results,
+            'loan_recommendations': loan_recommendations,
             'feature_importance': feature_importance,
             'feature_provenance': feature_provenance,
             'model_summary': {
@@ -912,9 +986,10 @@ def main():
     print(f"  ROC-AUC: {eval_results['auc_score']:.4f}")
     print(f"  Brier Score: {eval_results['brier_score']:.4f}")
     
-    print(f"\nBacktest Results (2017Q1):")
+    print(f"\nBacktest Results (2017Q1) - $50,000 Budget:")
     print(f"  Selected {backtest_results['selected_loans']} loans")
     print(f"  Investment: ${backtest_results['total_investment']:,.2f}")
+    print(f"  Budget utilization: {backtest_results['budget_utilization']:.1%}")
     print(f"  Selected default rate: {backtest_results['selected_default_rate']:.3f}")
     print(f"  Market default rate: {backtest_results['overall_default_rate']:.3f}")
     print(f"  Improvement: {backtest_results['default_rate_improvement']:.3f}")
@@ -928,7 +1003,13 @@ def main():
     joblib.dump(analyzer.model, 'trained_model.pkl')
     joblib.dump(analyzer.scaler, 'feature_scaler.pkl')
     
+    # Save loan recommendations for hiring team
+    loan_recommendations = results['loan_recommendations']
+    loan_recommendations.to_csv('loan_recommendations_2017Q1.csv', index=False)
+    
     print(f"\nModel and scaler saved for reproducibility.")
+    print(f"Loan recommendations saved to 'loan_recommendations_2017Q1.csv'")
+    print(f"Calibration plot saved to 'calibration_plot.png'")
     print("Analysis complete!")
     
     return results
