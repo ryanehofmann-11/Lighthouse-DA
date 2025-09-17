@@ -1,0 +1,4 @@
+id,funded_amnt,int_rate,term,installment,sub_grade,annual_inc,dti,fico_avg,emp_length,home_ownership,purpose,verification_status,default,predicted_default_prob,rank
+102633026,8500,7.49,36.0,264.37,A4,290000.0,0.6,837.0,0.0,MORTGAGE,other,Source Verified,0,0.014094851404373554,1
+97581625,2800,15.99,36.0,98.43,C5,180000.0,13.35,812.0,10.0,MORTGAGE,other,Source Verified,0,0.01816147165991897,2
+103482079,12000,7.49,36.0,373.22,A4,138637.0,0.22,847.5,10.0,MORTGAGE,debt_consolidation,Verified,1,0.019442302407399883,3
